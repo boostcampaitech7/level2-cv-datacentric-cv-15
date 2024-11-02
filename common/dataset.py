@@ -233,6 +233,9 @@ def crop_img(img, vertices, labels, length):
     box = (start_w, start_h, start_w + length, start_h + length)
     region = img.crop(box)
 
+    new_vertices[:, [0, 2, 4, 6]] -= start_w
+    new_vertices[:, [1, 3, 5, 7]] -= start_h
+
     # 기본값 반환 (좌표 못 찾았을 때)
     return region, new_vertices
 
