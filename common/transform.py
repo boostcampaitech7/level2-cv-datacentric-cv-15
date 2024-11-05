@@ -1,3 +1,8 @@
+import cv2
+import random
+import numpy as np
+from augraphy import *
+
 # texture
 def dirtydrum(image, **kwargs):
     #print("dirtydrum")
@@ -52,6 +57,17 @@ def dirthering(image, **kwargs):
     return method(image)
 
 # texture
+def noise_texture(image, **kwargs):
+    #print("noise_texture")
+    method = NoiseTexturize(
+        sigma_range=(2, 3),
+        turbulence_range=(2, 5),
+        texture_width_range=(50, 500),
+        texture_height_range=(50, 500),
+        )
+    return method(image)
+
+# words
 def hollow(image, **kwargs):
     #print("hollow")
     method = Hollow(
@@ -63,17 +79,6 @@ def hollow(image, **kwargs):
         hollow_min_area_range=(10, 10),
         hollow_max_area_range=(5000, 5000),
         hollow_dilation_kernel_size_range = (3, 3),
-        )
-    return method(image)
-
-# texture
-def noise_texture(image, **kwargs):
-    #print("noise_texture")
-    method = NoiseTexturize(
-        sigma_range=(2, 3),
-        turbulence_range=(2, 5),
-        texture_width_range=(50, 500),
-        texture_height_range=(50, 500),
         )
     return method(image)
 
