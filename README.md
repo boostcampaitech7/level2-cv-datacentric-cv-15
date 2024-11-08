@@ -66,16 +66,18 @@ OCR은 글자 검출 (text detection), 글자 인식 (text recognition), 정렬�
 
 - 대회 기간과 task 난이도를 고려하여 코드 작성에 제약사항이 있습니다. 
 
-`본 대회는 Data-Centric AI의 관점에서 모델 활용을 경쟁하는 대회입니다. 이에 따라 제공되는 베이스라인 코드 중 모델 관련 부분을 변경하는 것이 금지되어 있습니다.`
+`본 대회는 Data-Centric AI의 관점에서 모델 활용을 경쟁하는 대회입니다.`
+
+`이에 따라 제공되는 베이스라인 코드 중 모델 관련 부분을 변경하는 것이 금지되어 있습니다.`
 
 <br/>
 
 ## ✔ 평가 지표
 `DetEval 방식으로 평가됩니다.`
 
-- 이미지 레벨에서 정답 박스가 여러개 존재하고, 예측한 박스가 여러개가 있을 경우, 박스끼리의 다중 매칭을 허용하여 점수를 주는 평가방법
+- 이미지 레벨에서 정답 박스가 여러개 존재하고, 예측한 박스가 여러개가 있을 경우, 박스끼리의 다중 매칭을 허용하여 점수를 주는 평가방법입니다.
 
-- recall과 precision 의 조화평균인 F1 score 를 기준으로 랭킹이 산정
+- recall과 precision 의 조화평균인 F1 score 를 기준으로 랭킹이 산정됩니다.
 
 <br/>
 
@@ -131,7 +133,7 @@ OCR은 글자 검출 (text detection), 글자 인식 (text recognition), 정렬�
 ## 🔆 프로젝트 결과
 - public
 
-![image](https://github.com/user-attachments/assets/06f6f080-f37e-414e-aaeb-7dc67ad21992)
+![image](https://github.com/user-attachments/assets/7a5a26d8-f6c5-4d52-b308-0e9aaaf40be4)
 
 - private
 
@@ -150,4 +152,4 @@ OCR은 글자 검출 (text detection), 글자 인식 (text recognition), 정렬�
 
 
 
-    - 실험 내용 및 상세 결과는 보고서에 기술
+    - 실험 내용 및 상세 결과는 보고서에 기술되어 있습니다.
