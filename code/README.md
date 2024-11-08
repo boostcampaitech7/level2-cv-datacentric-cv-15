@@ -6,8 +6,8 @@
 
 |Augmentation method|crop_img 최적화 여부|Training time / epoch|
 |:----:|:----:|:----:|
-|base|x|3.2s+-0.3|
-|base|o|2.0s+-0.3|
+|base|x|3.2m+-0.3|
+|base|o|2.0m+-0.3|
 
 <br/>
 </div>
