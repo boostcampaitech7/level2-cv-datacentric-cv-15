@@ -150,4 +150,4 @@ OCR은 글자 검출 (text detection), 글자 인식 (text recognition), 정렬�
 
 
 
-    
+    - 실험 내용 및 상세 결과는 보고서에 기술
