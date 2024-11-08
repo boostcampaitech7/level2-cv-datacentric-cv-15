@@ -10,7 +10,9 @@ import cv2
 import albumentations as A
 from torch.utils.data import Dataset
 from shapely.geometry import Polygon
+import random
 from numba import njit
+from transform import *
 
 @njit
 def cal_distance(x1, y1, x2, y2):
@@ -265,6 +267,7 @@ def rotate_all_pixels(rotate_mat, anchor_x, anchor_y, length):
 
 
 def resize_img(img, vertices, size):
+    size = random.choice([2048, 2560, 3072])
     h, w = img.height, img.width
     ratio = size / max(h, w)
     if w > h:
@@ -274,6 +277,37 @@ def resize_img(img, vertices, size):
     new_vertices = vertices * ratio
     return img, new_vertices
 
+def resize_img_with_padding(img, vertices, target_size):
+    h, w = img.height, img.width
+    ratio = target_size / max(h, w)
+    
+    new_h = int(h * ratio)
+    new_w = int(w * ratio)
+    img_resized = img.resize((new_w, new_h), Image.BILINEAR)
+
+    pad_h = target_size - new_h
+    pad_w = target_size - new_w
+
+    # 패딩 계산
+    padding_top = pad_h // 2
+    padding_left = pad_w // 2
+
+    # 새로운 패딩 이미지 생성
+    if random.random() < 0.7:
+        # 밝은 색상 범위로 제한된 패딩 색상 생성
+        padding_color = (random.randint(200, 255), random.randint(200, 255), random.randint(200, 255))
+        img_padded = Image.new("RGB", (target_size, target_size), padding_color)
+    else:
+        padding_color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+        img_padded = Image.new("RGB", (target_size, target_size), padding_color)
+    img_padded.paste(img_resized, (padding_left, padding_top))
+
+    # 패딩을 고려한 새로운 vertices 계산
+    new_vertices = vertices * ratio
+    new_vertices[:, [0, 2, 4, 6]] += padding_left  # x 좌표에 왼쪽 패딩 추가
+    new_vertices[:, [1, 3, 5, 7]] += padding_top   # y 좌표에 상단 패딩 추가
+
+    return img_padded, new_vertices
 
 def adjust_height(img, vertices, ratio=0.2):
     '''adjust height of image to aug data
@@ -351,16 +385,21 @@ class SceneTextDataset(Dataset):
                  drop_under_threshold=1,
                  color_jitter=True,
                  normalize=True):
+
         self._lang_list = ['chinese', 'japanese', 'thai', 'vietnamese']
+            
         self.root_dir = root_dir
         self.split = split
         total_anno = dict(images=dict())
+        
+        # _lang_list에 있는 데이터셋들을 모두 불러오기
         for nation in self._lang_list:
-            with open(osp.join(root_dir, '{}_receipt/ufo/{}.json'.format(nation, split)), 'r', encoding='utf-8') as f:
+            json_path = osp.join(root_dir, f'{nation}_receipt/ufo/{split}_corrected_v2.json')
+            with open(json_path, 'r', encoding='utf-8') as f:
                 anno = json.load(f)
             for im in anno['images']:
                 total_anno['images'][im] = anno['images'][im]
-
+        
         self.anno = total_anno
         self.image_fnames = sorted(self.anno['images'].keys())
 
@@ -381,8 +420,10 @@ class SceneTextDataset(Dataset):
         elif lang_indicator == 'vi':
             lang = 'vietnamese'
         else:
-            raise ValueError
+            lang = 'sroie'
+           
         return osp.join(self.root_dir, f'{lang}_receipt', 'img', self.split)
+
     def __len__(self):
         return len(self.image_fnames)
 
@@ -393,7 +434,7 @@ class SceneTextDataset(Dataset):
         vertices, labels = [], []
         for word_info in self.anno['images'][image_fname]['words'].values():
             num_pts = np.array(word_info['points']).shape[0]
-            if num_pts > 4:
+            if num_pts != 4:
                 continue
             vertices.append(np.array(word_info['points']).flatten())
             labels.append(1)
@@ -406,34 +447,62 @@ class SceneTextDataset(Dataset):
             drop_under=self.drop_under_threshold
         )
 
-        #start_time = time.time()
         image = Image.open(image_fpath)
-        #print(f'load time: {time.time() - start_time}')
-        #start_time = time.time()
         image, vertices = resize_img(image, vertices, self.image_size)
-        #print(f'resize time: {time.time() - start_time}')
-        #start_time = time.time()
-        image, vertices = adjust_height(image, vertices)
-        #print(f'adjust_height time: {time.time() - start_time}')
-        #start_time = time.time()
+        if random.random() < 0.7:
+            image, vertices = adjust_height(image, vertices)
         image, vertices = rotate_img(image, vertices)
-        #print(f'rotate time: {time.time() - start_time}')
-        #start_time = time.time()
-        image, vertices = crop_img(image, vertices, labels, self.crop_size)
-        #print(f'crop time: {time.time() - start_time}')
+        if random.random() < 0.5:
+            image, vertices = crop_img(image, vertices, labels, self.crop_size)
+        else:
+            image, vertices = resize_img_with_padding(image, vertices, self.crop_size)
+
 
         if image.mode != 'RGB':
             image = image.convert('RGB')
         image = np.array(image)
 
         funcs = []
-        if self.color_jitter:
-            funcs.append(A.ColorJitter())
-        if self.normalize:
-            funcs.append(A.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)))
-        transform = A.Compose(funcs)
 
-        image = transform(image=image)['image']
+        if self.split == 'train':
+            # texture
+            funcs.append(
+                A.OneOf([ 
+                    A.Lambda(image=dirtydrum),  
+                    A.Lambda(image=delaunay_pattern),
+                    A.Lambda(image=dirtyscreen),
+                    A.Lambda(image=dirthering),
+                    A.Lambda(image=noise_texture),
+            ], p=0.25)) 
+
+            # words
+            funcs.append(
+                A.OneOf([  
+                    A.Lambda(image=dotmatrix),  
+                    A.Lambda(image=inkbleed),
+                    A.Lambda(image=hollow),
+                    A.Lambda(image=dilate),
+                    A.Lambda(image=erode),
+            ], p=0.2)) 
+
+            # brightness
+            funcs.append(
+                A.OneOf([
+                    A.ColorJitter(),
+                    A.Lambda(image=lighting_gradient_gaussian),  
+                    A.Lambda(image=lowlightness),
+                    A.Lambda(image=shadowcast),
+            ], p=0.5))
+
+            funcs.append(A.Normalize())
+
+            transform = A.Compose(funcs)
+            image = transform(image=image)['image']
+        elif self.split == 'val' and self.normalize:
+            # Validation 시에는 Normalize만 적용
+            transform = A.Normalize()
+            image = transform(image=image)['image']
+
         word_bboxes = np.reshape(vertices, (-1, 4, 2))
         roi_mask = generate_roi_mask(image, vertices, labels)
 
