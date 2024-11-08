@@ -42,7 +42,7 @@
 <br/>
 </div>
 
-### 4. Augrahpy 다양한 증강 적용
+### 4. Augraphy 다양한 증강 적용
 ---
 
     - texture, words, brightness 카테고리로 분할
